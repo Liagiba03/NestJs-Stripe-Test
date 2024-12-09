@@ -52,7 +52,11 @@ export class PaymentsService {
         const sig = req.headers['stripe-signature'];
         //console.log({sig})
         let event: Stripe.Event;
-        const endpointSecret = 'whsec_2a0627840798e59d97ddccaddb6899bd276b6162ba0b981459aadb19e4dbbaa7';
+        //Testing on localhost
+        //const endpointSecret = 'whsec_2a0627840798e59d97ddccaddb6899bd276b6162ba0b981459aadb19e4dbbaa7';
+
+        //Real
+        const endpointSecret = 'whsec_1qk7V92briJev3A2nGRfgN2Nboy73x2I';
 
         try {
             event = this.stripe.webhooks.constructEvent(
@@ -75,7 +79,7 @@ export class PaymentsService {
 
             default:
                 console.log(`Evento ${ event.type} not handled`);
-                
+
         }
         return res.status(200).json({sig});
     }
