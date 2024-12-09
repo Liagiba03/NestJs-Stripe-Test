@@ -14,7 +14,7 @@ export class PaymentsService {
     async createPaymentSession( paymentSessionDto: PaymentSessionDto){
 
         // Se toman los datos
-        const {currency, items} = paymentSessionDto;
+        const {currency, items, orderId} = paymentSessionDto;
 
         //Retorna el objeto que queremos crear para mandarlo
         const lineItems = items.map( item => {
@@ -35,13 +35,15 @@ export class PaymentsService {
             // Colocar el id de la orden 
             // Se coloca toda la informacion a enviar a stripe
             payment_intent_data: {
-                metadata: {}
+                metadata: {
+                    orderId : orderId
+                }
             },
 
             line_items: lineItems,
             mode:'payment', // Se puede cambiar por subscrption
-            success_url: 'http://localhost:3003/payments/sucess',
-            cancel_url: 'http://localhost:3003/payments/cancelled'
+            success_url: envs.stripeSuccessUrl,
+            cancel_url: envs.stripeCancelUrl
         });
 
         return session;
@@ -52,11 +54,9 @@ export class PaymentsService {
         const sig = req.headers['stripe-signature'];
         //console.log({sig})
         let event: Stripe.Event;
-        //Testing on localhost
-        //const endpointSecret = 'whsec_2a0627840798e59d97ddccaddb6899bd276b6162ba0b981459aadb19e4dbbaa7';
-
+     
         //Real
-        const endpointSecret = 'whsec_1qk7V92briJev3A2nGRfgN2Nboy73x2I';
+        const endpointSecret = envs.stripeEndpointSecret;
 
         try {
             event = this.stripe.webhooks.constructEvent(
@@ -69,12 +69,20 @@ export class PaymentsService {
             return ;
         }
 
-        console.log({event});
+        //console.log({event});
 
         switch(event.type){
             case 'charge.succeeded':
+
+            const chargeSucceeded = event.data.object;
                 // TODO: Call our service
-                console.log(event);
+                console.log('WEBHOOK')
+                console.log({
+                    metadata: chargeSucceeded.metadata,
+                    orderId : chargeSucceeded.metadata.orderId
+
+                })
+                //console.log(event);
             break;
 
             default:
